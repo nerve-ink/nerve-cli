@@ -119,6 +119,31 @@ func TestRunSendPostsSenderV1Payload(t *testing.T) {
 	}
 }
 
+func TestRunSendFailsOnNon2xx(t *testing.T) {
+	key := base64.RawURLEncoding.EncodeToString(bytesOf(32, 9))
+	client := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusNotFound,
+			Status:     "404 Not Found",
+			Body:       io.NopCloser(strings.NewReader(`{"title":"Not Found","detail":"Invalid Token"}`)),
+			Header:     make(http.Header),
+		}, nil
+	})}
+
+	dsn := "nerve://tok_123:" + key + "@api.nerve.ink"
+	var out strings.Builder
+	err := run([]string{"send", "--dsn", dsn}, strings.NewReader("deploy failed\n"), &out, client)
+	if err == nil {
+		t.Fatal("expected non-2xx response to fail")
+	}
+	if !strings.Contains(err.Error(), "404 Not Found") || !strings.Contains(err.Error(), "Invalid Token") {
+		t.Fatalf("error = %q", err.Error())
+	}
+	if out.String() != "" {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
