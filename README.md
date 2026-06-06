@@ -1,5 +1,10 @@
 # nerve-cli
 
+[![Website](https://img.shields.io/badge/website-nerve.ink-111214)](https://nerve.ink)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nerve-ink/nerve-cli.svg)](https://pkg.go.dev/github.com/nerve-ink/nerve-cli)
+
+[Website](https://nerve.ink) · [Docs](https://nerve.ink/docs.html) · [Run agent](https://github.com/nerve-ink/nerve-agent)
+
 Small command-line sender for Nerve pipes. This is the recommended first
 integration path because it is one-way and does not grant shell access.
 
