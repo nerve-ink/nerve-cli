@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -78,6 +79,9 @@ func TestRunSendPostsSenderV1Payload(t *testing.T) {
 		if got := r.Header.Get("X-Nerve-Encryption-Mode"); got != "sender_v1" {
 			t.Fatalf("encryption header = %q", got)
 		}
+		if got := r.Header.Get("Content-Type"); got != "application/json" {
+			t.Fatalf("content type = %q", got)
+		}
 		if got := r.Header.Get("X-Nerve-Severity"); got != "critical" {
 			t.Fatalf("severity header = %q", got)
 		}
@@ -90,6 +94,15 @@ func TestRunSendPostsSenderV1Payload(t *testing.T) {
 		}
 		if len(body) == 0 || strings.Contains(string(body), "secret plaintext") {
 			t.Fatalf("body was not encrypted: %q", body)
+		}
+		var requestBody struct {
+			Text string `json:"text"`
+		}
+		if err := json.Unmarshal(body, &requestBody); err != nil {
+			t.Fatalf("body was not json: %v", err)
+		}
+		if requestBody.Text == "" {
+			t.Fatal("encrypted text is empty")
 		}
 		return &http.Response{
 			StatusCode: http.StatusOK,

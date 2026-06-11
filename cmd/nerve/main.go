@@ -6,6 +6,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -200,11 +201,16 @@ func postSenderPayload(client *http.Client, cfg sendConfig, dsn senderDSN, paylo
 	}
 
 	endpoint := fmt.Sprintf("%s://%s/api/v2/hooks/%s", dsn.Scheme, dsn.Host, url.PathEscape(dsn.Token))
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
+	body, err := json.Marshal(map[string]string{"text": string(payload)})
+	if err != nil {
+		return fmt.Errorf("encode request: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Nerve-Encryption-Mode", "sender_v1")
 	if cfg.Severity != "" {
 		req.Header.Set("X-Nerve-Severity", cfg.Severity)
