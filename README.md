@@ -21,22 +21,7 @@ old messages, connect as an agent, or execute commands.
 
 ## Install
 
-Copy one block for your machine.
-
-macOS with Homebrew:
-
-```bash
-command -v brew >/dev/null || {
-  echo "Homebrew is required for this one-liner: https://brew.sh"
-  exit 1
-}
-command -v go >/dev/null || brew install go
-go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
-export PATH="$PATH:$(go env GOPATH)/bin"
-nerve --help
-```
-
-Linux x86_64 / ARM64, using the official Go tarball:
+Linux server / VM:
 
 ```bash
 command -v go >/dev/null || {
