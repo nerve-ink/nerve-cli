@@ -157,6 +157,27 @@ func TestRunSendFailsOnNon2xx(t *testing.T) {
 	}
 }
 
+func TestRunHelpExitsCleanly(t *testing.T) {
+	for _, args := range [][]string{
+		{"--help"},
+		{"-h"},
+		{"help"},
+		{"send", "--help"},
+		{"send", "-h"},
+	} {
+		t.Run(strings.Join(args, "_"), func(t *testing.T) {
+			var out strings.Builder
+			err := run(args, strings.NewReader(""), &out, nil)
+			if err != nil {
+				t.Fatalf("run returned error: %v", err)
+			}
+			if !strings.Contains(out.String(), "Usage:") || !strings.Contains(out.String(), "nerve send") {
+				t.Fatalf("stdout = %q", out.String())
+			}
+		})
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {

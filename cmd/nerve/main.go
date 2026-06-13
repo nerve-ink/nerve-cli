@@ -46,6 +46,10 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout io.Writer, client *http.Client) error {
+	if wantsHelp(args) {
+		printUsage(stdout)
+		return nil
+	}
 	if len(args) > 0 && args[0] == "send" {
 		args = args[1:]
 	}
@@ -86,6 +90,34 @@ func run(args []string, stdin io.Reader, stdout io.Writer, client *http.Client) 
 
 	fmt.Fprintln(stdout, "sent")
 	return nil
+}
+
+func wantsHelp(args []string) bool {
+	if len(args) == 0 {
+		return false
+	}
+	if args[0] == "help" || args[0] == "-h" || args[0] == "--help" {
+		return true
+	}
+	return len(args) == 2 && args[0] == "send" && (args[1] == "-h" || args[1] == "--help")
+}
+
+func printUsage(w io.Writer) {
+	fmt.Fprintln(w, `Usage:
+  nerve send [--dsn DSN] [--severity standard|alert|critical] [--title TITLE]
+
+Reads plaintext from stdin, encrypts it locally, and sends a sender_v1 signal.
+
+Examples:
+  export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
+  echo "deploy failed" | nerve send
+
+Flags:
+  --dsn       Sender DSN. Defaults to NERVE_DSN.
+  --severity  Signal severity. Default: standard.
+  --title     Optional signal title.
+  --kind      Signal kind metadata. Default: alert.
+  --timeout   HTTP request timeout. Default: 10s.`)
 }
 
 func parseFlags(args []string) (sendConfig, error) {
