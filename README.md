@@ -5,38 +5,71 @@
 
 [Website](https://nerve.ink) · [Docs](https://nerve.ink/docs.html) · [Run agent](https://github.com/nerve-ink/nerve-agent)
 
-Small command-line sender for Nerve pipes. This is the recommended first
-integration path because it is one-way and does not grant shell access.
+Send encrypted ops signals from shell scripts, CI/CD, cron jobs, and servers to
+your phone.
 
-`nerve send` reads plaintext from stdin, encrypts it locally with the sender key
-from `NERVE_DSN`, and posts only ciphertext to the Nerve relay. The sender DSN
-can send signals into one pipe, but it cannot read history or execute commands.
+```bash
+echo "deploy failed" | nerve send
+```
+
+`nerve send` is the safe first Nerve integration. It reads plaintext from stdin,
+encrypts it locally with the sender key from `NERVE_DSN`, and posts only
+ciphertext to the Nerve relay.
+
+The sender DSN can send signals into one pipe. It cannot read history, decrypt
+old messages, connect as an agent, or execute commands.
 
 ## Install
+
+Install Go first if it is not already on the machine:
+
+https://go.dev/doc/install
+
+Then install the CLI:
 
 ```bash
 go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-## Send
+## Quickstart
 
-Create a pipe in Nerve iOS, open Pipe Setup, choose **Send signals**, then copy
-the sender DSN:
+1. Create a pipe in the Nerve mobile app.
+2. Open pipe setup.
+3. Choose **Send signals**.
+4. Copy the sender DSN.
 
 ```bash
 export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
 echo "deploy failed" | nerve send
 ```
 
-Optional flags:
+Expected output:
 
-```bash
-echo "deploy failed" | nerve send --severity critical --title "Deploy failed"
+```text
+sent
 ```
 
-The relay receives an encrypted `sender_v1` payload. Decryption happens on the
-iOS device that owns the pipe.
+The phone receives an encrypted signal. Decryption happens locally on the
+device that owns the pipe.
+
+## Flags
+
+```bash
+echo "deploy failed" | nerve send \
+  --severity critical \
+  --title "Deploy failed"
+```
+
+Common flags:
+
+| Flag | Default | Purpose |
+|---|---:|---|
+| `--dsn` | `NERVE_DSN` | Sender DSN. Prefer an env var or CI secret. |
+| `--severity` | `standard` | Signal severity, for example `standard`, `alert`, `critical`. |
+| `--title` | empty | Optional short title shown by clients. |
+| `--kind` | `alert` | Signal kind metadata. |
+| `--timeout` | `10s` | HTTP request timeout. |
 
 ## GitHub Actions
 
@@ -67,10 +100,106 @@ jobs:
             "${{ github.event.workflow_run.html_url }}" | nerve send --title "Backend Deploy"
 ```
 
-## Security Note
+## Cron
 
-A sender DSN contains a sender token and a sender encryption key.
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
+
+if ! /opt/jobs/backup.sh; then
+  echo "backup failed on $(hostname)" | nerve send --severity alert
+  exit 1
+fi
+```
+
+Crontab:
+
+```cron
+15 3 * * * /opt/jobs/backup-with-nerve.sh
+```
+
+## Bash / Smoke Tests
+
+```bash
+if ./smoke.sh; then
+  echo "smoke passed: api-prod" | nerve send
+else
+  echo "smoke failed: api-prod" | nerve send --severity critical
+fi
+```
+
+## Security Model
+
+A sender DSN contains:
+
+- a sender token
+- a sender encryption key
+- the relay host
 
 If it leaks, an attacker can send fake signals into that one pipe until the
-credential is rotated. They cannot read history, decrypt old messages, connect
-as an agent, or execute commands.
+credential is rotated.
+
+They cannot:
+
+- read history
+- decrypt old messages
+- connect as an agent
+- execute commands
+
+Do not put secrets, tokens, private keys, or full environment dumps into signal
+text. Send short operational context: service, environment, status, commit SHA,
+and a run URL.
+
+## Rotate a Sender DSN
+
+1. Open pipe setup in the mobile app.
+2. Create a new **Send signals** credential.
+3. Update your CI secret or server env var.
+4. Delete the old sender credential.
+
+## Troubleshooting
+
+### `go: command not found`
+
+Install Go first:
+
+https://go.dev/doc/install
+
+Then run:
+
+```bash
+go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+```
+
+### `nerve: NERVE_DSN or --dsn is required`
+
+Export the DSN copied from pipe setup:
+
+```bash
+export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
+```
+
+Or pass it directly:
+
+```bash
+echo "deploy failed" | nerve send --dsn "nerve://TOKEN:SENDER_KEY@api.nerve.ink"
+```
+
+### Signal says `sent`, but I do not see it
+
+Check that:
+
+- the phone is signed into the same Nerve account
+- notifications are allowed
+- the sender DSN belongs to the pipe you are watching
+- the app can decrypt the pipe keys
+
+## Agent
+
+Need signed actions from a machine you control? Use
+[`nerve-agent`](https://github.com/nerve-ink/nerve-agent).
+
+The agent is the advanced path. Start with send-only signals unless you
+explicitly need remote actions.
