@@ -40,6 +40,15 @@ ciphertext to the Nerve relay.
 The sender DSN can send signals into one pipe. It cannot read history, decrypt
 old messages, connect as an agent, or execute commands.
 
+## Why this is not just a webhook
+
+| Boundary | What happens |
+|---|---|
+| CI secret leaks | A sender DSN can create alert noise in one pipe. It cannot read history, decrypt content, connect as an agent, or execute commands. |
+| Relay receives traffic | The relay routes encrypted records and delivery metadata. Signal content is encrypted before it reaches the relay. |
+| Phone receives push | APNs/FCM wake or notify the device. Clients sync the encrypted record and decrypt locally. |
+| Agent is needed | Use [`nerve-agent`](https://github.com/nerve-ink/nerve-agent) only when you want signed actions on a machine you control. |
+
 ## Install
 
 Linux server / VM:
