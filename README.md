@@ -3,7 +3,7 @@
 [![Website](https://img.shields.io/badge/website-nerve.ink-111214)](https://nerve.ink)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nerve-ink/nerve-cli.svg)](https://pkg.go.dev/github.com/nerve-ink/nerve-cli)
 
-[Website](https://nerve.ink) · [Docs](https://nerve.ink/docs.html) · [Run agent](https://github.com/nerve-ink/nerve-agent)
+[Website](https://nerve.ink) · [App Store](https://apps.apple.com/us/app/nerveops/id6778026992) · [Docs](https://nerve.ink/docs.html) · [Run agent](https://github.com/nerve-ink/nerve-agent)
 
 Send encrypted ops signals from shell scripts, CI/CD, cron jobs, and servers to
 your phone.
@@ -32,6 +32,9 @@ sent
 
 The phone receives an encrypted signal. The relay routes ciphertext; decryption
 happens locally on the device that owns the pipe.
+
+NerveOps for iOS is available on the
+[App Store](https://apps.apple.com/us/app/nerveops/id6778026992).
 
 `nerve send` is the safe first Nerve integration. It reads plaintext from stdin,
 encrypts it locally with the sender key from `NERVE_DSN`, and posts only
