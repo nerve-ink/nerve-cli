@@ -12,6 +12,27 @@ your phone.
 echo "deploy failed" | nerve send
 ```
 
+## Start with signals
+
+1. Create a pipe in the Nerve mobile app.
+2. Open **Pipe Setup** and choose **Send signals**.
+3. Store the copied sender DSN as `NERVE_DSN`.
+4. Send your first encrypted alert:
+
+```bash
+export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
+echo "deploy failed" | nerve send
+```
+
+Expected output:
+
+```text
+sent
+```
+
+The phone receives an encrypted signal. The relay routes ciphertext; decryption
+happens locally on the device that owns the pipe.
+
 `nerve send` is the safe first Nerve integration. It reads plaintext from stdin,
 encrypts it locally with the sender key from `NERVE_DSN`, and posts only
 ciphertext to the Nerve relay.
@@ -48,27 +69,6 @@ go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
 export PATH="$PATH:$(go env GOPATH)/bin"
 nerve --help
 ```
-
-## Quickstart
-
-1. Create a pipe in the Nerve mobile app.
-2. Open pipe setup.
-3. Choose **Send signals**.
-4. Copy the sender DSN.
-
-```bash
-export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
-echo "deploy failed" | nerve send
-```
-
-Expected output:
-
-```text
-sent
-```
-
-The phone receives an encrypted signal. Decryption happens locally on the
-device that owns the pipe.
 
 ## Flags
 
@@ -107,14 +107,45 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
-      - run: go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+      - name: Install nerve
+        run: go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
       - name: Send encrypted deploy signal
         env:
           NERVE_DSN: ${{ secrets.NERVE_DSN }}
         run: |
           printf 'deploy %s\nrun: %s\n' \
             "${{ github.event.workflow_run.conclusion }}" \
-            "${{ github.event.workflow_run.html_url }}" | nerve send --title "Backend Deploy"
+            "${{ github.event.workflow_run.html_url }}" \
+            | "$(go env GOPATH)/bin/nerve" send --title "Backend Deploy"
+```
+
+For a regular job, send only on failure:
+
+```yaml
+- uses: actions/setup-go@v5
+  with:
+    go-version: "1.25.x"
+- run: go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+- name: Notify Nerve on failure
+  if: failure()
+  env:
+    NERVE_DSN: ${{ secrets.NERVE_DSN }}
+  run: |
+    printf 'FAILED: %s\nbranch: %s\nrun: %s\n' \
+      "${{ github.repository }}" \
+      "${{ github.ref_name }}" \
+      "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+      | "$(go env GOPATH)/bin/nerve" send --severity critical --title "CI failed"
+```
+
+Keep the signal short: repository, branch/environment, status, commit SHA, and
+run URL. Do not pipe full logs or secrets into phone alerts.
+
+```text
+Example message:
+deploy success
+sha: b62b038
+run: https://github.com/nerve-ink/nerve-ops/actions/runs/26969431142
 ```
 
 ## Cron
@@ -186,6 +217,33 @@ Install Go with your OS package manager, then run:
 go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
+
+On GitHub Actions, prefer `actions/setup-go@v5` before `go install`.
+
+### `415 Unsupported Media Type`
+
+You are probably calling the old `nerve` shell function or a generic webhook
+instead of the Go CLI. Check:
+
+```bash
+type nerve
+which nerve
+nerve --help
+```
+
+The current CLI prints `sent` on success and sends
+`Content-Type: application/json` automatically.
+
+### `go install` cannot read the repository
+
+Use the public module path exactly:
+
+```bash
+go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+```
+
+If Go reports that GitHub needs credentials, verify that your environment is not
+rewriting GitHub URLs to a private mirror or stale local fork.
 
 ### `nerve: NERVE_DSN or --dsn is required`
 
