@@ -77,26 +77,6 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 nerve --help
 ```
 
-If Go is not installed on a Linux server / VM:
-
-```bash
-command -v go >/dev/null || {
-  GO_VERSION="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n 1)"
-  case "$(uname -m)" in
-    x86_64|amd64) GO_ARCH="amd64" ;;
-    aarch64|arm64) GO_ARCH="arm64" ;;
-    *) echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
-  esac
-  curl -fsSLO "https://go.dev/dl/${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
-  sudo rm -rf /usr/local/go
-  sudo tar -C /usr/local -xzf "${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
-  export PATH="/usr/local/go/bin:$PATH"
-}
-go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
-export PATH="$PATH:$(go env GOPATH)/bin"
-nerve --help
-```
-
 ## Flags
 
 ```bash
@@ -233,14 +213,14 @@ and a run URL.
 
 ### `go: command not found`
 
-Install Go with your OS package manager, then run:
+Use the recommended installer instead of the Go fallback:
 
 ```bash
-go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
-export PATH="$PATH:$(go env GOPATH)/bin"
+curl -fsSL https://nerve.ink/install.sh | sh
 ```
 
-On GitHub Actions, prefer `actions/setup-go@v5` before `go install`.
+The Go path is only for local development or environments that intentionally
+build from source.
 
 ### `415 Unsupported Media Type`
 
