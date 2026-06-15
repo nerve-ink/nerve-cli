@@ -178,6 +178,17 @@ func TestRunHelpExitsCleanly(t *testing.T) {
 	}
 }
 
+func TestRunVersionExitsCleanly(t *testing.T) {
+	var out strings.Builder
+	err := run([]string{"--version"}, strings.NewReader(""), &out, nil)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	if strings.TrimSpace(out.String()) == "" {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {

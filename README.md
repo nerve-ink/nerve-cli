@@ -3,10 +3,11 @@
 [![Website](https://img.shields.io/badge/website-nerve.ink-111214)](https://nerve.ink)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nerve-ink/nerve-cli.svg)](https://pkg.go.dev/github.com/nerve-ink/nerve-cli)
 
-[Website](https://nerve.ink) · [App Store](https://apps.apple.com/us/app/nerveops/id6778026992) · [Docs](https://nerve.ink/docs.html) · [Run agent](https://github.com/nerve-ink/nerve-agent)
+[Website](https://nerve.ink) · [Start](https://nerve.ink/start) · [App Store](https://apps.apple.com/us/app/nerveops/id6778026992) · [Run agent](https://github.com/nerve-ink/nerve-agent)
 
-Send encrypted ops signals from shell scripts, CI/CD, cron jobs, and servers to
-your phone.
+Encrypted CI/CD, cron and server alerts to iPhone.
+
+Sender secrets can only send. Relay sees ciphertext. Actions are optional.
 
 ```bash
 echo "deploy failed" | nerve send
@@ -16,12 +17,14 @@ echo "deploy failed" | nerve send
 
 1. Create a pipe in the Nerve mobile app.
 2. Open **Pipe Setup** and choose **Send signals**.
-3. Store the copied sender DSN as `NERVE_DSN`.
-4. Send your first encrypted alert:
+3. Copy the sender DSN.
+4. Install `nerve`.
+5. Send your first encrypted alert:
 
 ```bash
+curl -fsSL https://nerve.ink/install.sh | sh
 export NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink"
-echo "deploy failed" | nerve send
+echo "deploy failed" | nerve send --title "Nerve test"
 ```
 
 Expected output:
@@ -52,9 +55,29 @@ old messages, connect as an agent, or execute commands.
 | Phone receives push | APNs/FCM wake or notify the device. Clients sync the encrypted record and decrypt locally. |
 | Agent is needed | Use [`nerve-agent`](https://github.com/nerve-ink/nerve-agent) only when you want signed actions on a machine you control. |
 
+## Copy-paste Examples
+
+- [GitHub Actions failure alert](./examples/github-actions-failure.yml)
+- [Cron backup failure alert](./examples/cron-backup-failed.sh)
+- [systemd failed unit alert](./examples/systemd-failed-unit.sh)
+
 ## Install
 
-Linux server / VM:
+Recommended:
+
+```bash
+curl -fsSL https://nerve.ink/install.sh | sh
+```
+
+Go fallback / developer install:
+
+```bash
+go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+export PATH="$PATH:$(go env GOPATH)/bin"
+nerve --help
+```
+
+If Go is not installed on a Linux server / VM:
 
 ```bash
 command -v go >/dev/null || {
@@ -69,14 +92,6 @@ command -v go >/dev/null || {
   sudo tar -C /usr/local -xzf "${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
   export PATH="/usr/local/go/bin:$PATH"
 }
-go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
-export PATH="$PATH:$(go env GOPATH)/bin"
-nerve --help
-```
-
-If Go is already installed:
-
-```bash
 go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
 export PATH="$PATH:$(go env GOPATH)/bin"
 nerve --help
@@ -116,11 +131,8 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.25.x"
       - name: Install nerve
-        run: go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+        run: curl -fsSL https://nerve.ink/install.sh | sh
       - name: Send encrypted deploy signal
         env:
           NERVE_DSN: ${{ secrets.NERVE_DSN }}
@@ -128,16 +140,14 @@ jobs:
           printf 'deploy %s\nrun: %s\n' \
             "${{ github.event.workflow_run.conclusion }}" \
             "${{ github.event.workflow_run.html_url }}" \
-            | "$(go env GOPATH)/bin/nerve" send --title "Backend Deploy"
+            | nerve send --title "Backend Deploy"
 ```
 
 For a regular job, send only on failure:
 
 ```yaml
-- uses: actions/setup-go@v5
-  with:
-    go-version: "1.25.x"
-- run: go install github.com/nerve-ink/nerve-cli/cmd/nerve@latest
+- name: Install nerve
+  run: curl -fsSL https://nerve.ink/install.sh | sh
 - name: Notify Nerve on failure
   if: failure()
   env:
@@ -147,7 +157,7 @@ For a regular job, send only on failure:
       "${{ github.repository }}" \
       "${{ github.ref_name }}" \
       "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-      | "$(go env GOPATH)/bin/nerve" send --severity critical --title "CI failed"
+      | nerve send --severity critical --title "CI failed"
 ```
 
 Keep the signal short: repository, branch/environment, status, commit SHA, and

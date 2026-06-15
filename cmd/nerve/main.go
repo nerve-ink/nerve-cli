@@ -23,6 +23,8 @@ const (
 	senderAAD      = "nerve.sender.v1"
 )
 
+var version = "dev"
+
 type senderDSN struct {
 	Token  string
 	Key    []byte
@@ -46,6 +48,10 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout io.Writer, client *http.Client) error {
+	if wantsVersion(args) {
+		fmt.Fprintln(stdout, version)
+		return nil
+	}
 	if wantsHelp(args) {
 		printUsage(stdout)
 		return nil
@@ -92,6 +98,10 @@ func run(args []string, stdin io.Reader, stdout io.Writer, client *http.Client) 
 	return nil
 }
 
+func wantsVersion(args []string) bool {
+	return len(args) == 1 && (args[0] == "version" || args[0] == "--version" || args[0] == "-version")
+}
+
 func wantsHelp(args []string) bool {
 	if len(args) == 0 {
 		return false
@@ -105,6 +115,7 @@ func wantsHelp(args []string) bool {
 func printUsage(w io.Writer) {
 	fmt.Fprintln(w, `Usage:
   nerve send [--dsn DSN] [--severity standard|alert|critical] [--title TITLE]
+  nerve --version
 
 Reads plaintext from stdin, encrypts it locally, and sends a sender_v1 signal.
 

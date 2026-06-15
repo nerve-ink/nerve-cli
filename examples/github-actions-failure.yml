@@ -1,0 +1,31 @@
+name: Notify Nerve On Failure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Your real build/test/deploy steps go here.
+      - name: Run tests
+        run: ./scripts/test.sh
+
+      - name: Install Nerve
+        if: failure()
+        run: curl -fsSL https://nerve.ink/install.sh | sh
+
+      - name: Notify Nerve on failure
+        if: failure()
+        env:
+          NERVE_DSN: ${{ secrets.NERVE_DSN }}
+        run: |
+          printf 'FAILED: %s\nbranch: %s\nrun: %s\n' \
+            "${{ github.repository }}" \
+            "${{ github.ref_name }}" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            | nerve send --severity critical --title "CI failed"
