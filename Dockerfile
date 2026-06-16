@@ -11,16 +11,12 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/nerve ./cmd/nerve
 
-FROM alpine:3.22
+FROM scratch
 
-RUN apk add --no-cache ca-certificates \
-  && addgroup -S nerve \
-  && adduser -S -G nerve nerve
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /out/nerve /nerve
 
-COPY --from=build /out/nerve /usr/local/bin/nerve
+USER 65532:65532
 
-USER nerve
-WORKDIR /work
-
-ENTRYPOINT ["nerve"]
+ENTRYPOINT ["/nerve"]
 CMD ["--help"]
