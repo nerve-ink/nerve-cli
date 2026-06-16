@@ -88,6 +88,14 @@ echo "deploy failed" | docker run -i --rm \
   p1xel32/nerve-cli:latest send
 ```
 
+GitHub Container Registry mirror:
+
+```bash
+echo "deploy failed" | docker run -i --rm \
+  -e NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink" \
+  ghcr.io/nerve-ink/nerve-cli:latest send
+```
+
 The image is send-only. It does not run an agent and cannot execute commands.
 For signed actions on a trusted host, use
 [`nerve-agent`](https://github.com/nerve-ink/nerve-agent).
