@@ -77,6 +77,21 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 nerve --help
 ```
 
+## Docker
+
+Use the Docker image when you want `nerve send` in CI, cron, or a host where you
+do not want to install Go or a local binary.
+
+```bash
+echo "deploy failed" | docker run -i --rm \
+  -e NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink" \
+  p1xel32/nerve-cli:latest send
+```
+
+The image is send-only. It does not run an agent and cannot execute commands.
+For signed actions on a trusted host, use
+[`nerve-agent`](https://github.com/nerve-ink/nerve-agent).
+
 ## Flags
 
 ```bash
