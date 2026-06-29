@@ -3,9 +3,9 @@
 [![Website](https://img.shields.io/badge/website-nerve.ink-111214)](https://nerve.ink)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nerve-ink/nerve-cli.svg)](https://pkg.go.dev/github.com/nerve-ink/nerve-cli)
 
-[Website](https://nerve.ink) · [Start](https://nerve.ink/start) · [App Store](https://apps.apple.com/us/app/nerveops/id6778026992) · [Run agent](https://github.com/nerve-ink/nerve-agent)
+[Website](https://nerve.ink) · [Start](https://nerve.ink/start) · [App Store](https://apps.apple.com/us/app/nerveops/id6778026992) · [Google Play](https://play.google.com/store/apps/details?id=ink.nerve.app&pcampaignid=web_share) · [Run agent](https://github.com/nerve-ink/nerve-agent)
 
-Encrypted CI/CD, cron and server alerts to iPhone.
+Encrypted CI/CD, cron, webhook and server alerts to iPhone and Android.
 
 Sender secrets can only send. Relay sees ciphertext. Actions are optional.
 
@@ -36,8 +36,9 @@ sent
 The phone receives an encrypted signal. The relay routes ciphertext; decryption
 happens locally on the device that owns the pipe.
 
-NerveOps for iOS is available on the
-[App Store](https://apps.apple.com/us/app/nerveops/id6778026992).
+NerveOps is available on the
+[App Store](https://apps.apple.com/us/app/nerveops/id6778026992) and
+[Google Play](https://play.google.com/store/apps/details?id=ink.nerve.app&pcampaignid=web_share).
 
 `nerve send` is the safe first Nerve integration. It reads plaintext from stdin,
 encrypts it locally with the sender key from `NERVE_DSN`, and posts only
