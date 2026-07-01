@@ -13,11 +13,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/nerve .
 
 FROM scratch
 
-LABEL org.opencontainers.image.title="Nerve CLI"
-LABEL org.opencontainers.image.description="Send failed deploy, CI, cron, backup, and smoke-test alerts to your phone with a send-only encrypted NerveOps secret."
-LABEL org.opencontainers.image.source="https://github.com/nerve-ink/nerve-cli"
-LABEL org.opencontainers.image.url="https://nerve.ink"
-
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /out/nerve /nerve
 

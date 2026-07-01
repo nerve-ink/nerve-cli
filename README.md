@@ -80,51 +80,21 @@ nerve --help
 
 ## Docker
 
-Use the Docker image when you need a phone alert from CI, cron, a backup job, or
-a server script and you do not want to install Go or a local binary.
-
-### Alert Me When A Deploy Fails
+Use the Docker image when you want `nerve send` in CI, cron, or a host where you
+do not want to install Go or a local binary.
 
 ```bash
-printf 'DEPLOY FAILED: production\nrepo: api\nrun: https://github.com/org/repo/actions/runs/123\n' \
-  | docker run -i --rm \
+echo "deploy failed" | docker run -i --rm \
   -e NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink" \
-  p1xel32/nerve-cli:latest send \
-  --severity critical \
-  --title "Deploy failed"
+  p1xel32/nerve-cli:latest send
 ```
 
-GHCR mirror:
+GitHub Container Registry mirror:
 
 ```bash
-printf 'DEPLOY FAILED: production\nrepo: api\nrun: https://github.com/org/repo/actions/runs/123\n' \
-  | docker run -i --rm \
+echo "deploy failed" | docker run -i --rm \
   -e NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink" \
-  ghcr.io/nerve-ink/nerve-cli:latest send \
-  --severity critical \
-  --title "Deploy failed"
-```
-
-### Alert Me When A Cron Or Backup Job Fails
-
-```bash
-/opt/jobs/backup.sh || printf 'BACKUP FAILED: %s\n' "$(hostname)" \
-  | docker run -i --rm \
-  -e NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink" \
-  p1xel32/nerve-cli:latest send \
-  --severity alert \
-  --title "Backup failed"
-```
-
-### Alert Me When Smoke Tests Fail
-
-```bash
-./scripts/smoke-prod.sh || printf 'SMOKE FAILED: production\n' \
-  | docker run -i --rm \
-  -e NERVE_DSN="nerve://TOKEN:SENDER_KEY@api.nerve.ink" \
-  p1xel32/nerve-cli:latest send \
-  --severity critical \
-  --title "Smoke tests failed"
+  ghcr.io/nerve-ink/nerve-cli:latest send
 ```
 
 The image is send-only. It does not run an agent and cannot execute commands.
@@ -147,21 +117,7 @@ Common flags:
 | `--severity` | `standard` | Signal severity, for example `standard`, `alert`, `critical`. |
 | `--title` | empty | Optional short title shown by clients. |
 | `--kind` | `alert` | Signal kind metadata. |
-| `--heartbeat` | `false` | Update pipe liveness without creating a visible signal card or push. |
 | `--timeout` | `10s` | HTTP request timeout. |
-
-## Quiet Heartbeat
-
-Use heartbeat when a cron job, monitor, or hosted webhook bridge should prove
-that it is still alive without creating alert noise:
-
-```bash
-nerve send --heartbeat
-```
-
-Heartbeat updates the pipe liveness timestamp. The mobile app shows it in the
-pipe header sheet as `Last heartbeat` and `Heartbeat status`. It does not create
-a chat message and does not send a push notification.
 
 ## GitHub Actions
 
